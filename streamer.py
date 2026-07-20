@@ -1,33 +1,31 @@
+
 import os
 from dotenv import load_dotenv
 from groq import Groq
 
-# Load environment variables
 load_dotenv()
 
-# Create Groq client
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-
-def stream_response(prompt):
-    """
-    Streams the AI response one chunk at a time.
-    """
-
+def stream_response(prompt, model="llama-3.3-70b-versatile", temperature=0.7):
     stream = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7,
-        stream=True
+        model=model,
+        messages=[{"role":"user","content":prompt}],
+        temperature=temperature,
+        stream=True,
     )
 
     for chunk in stream:
-
-        if chunk.choices:
-
+        try:
             content = chunk.choices[0].delta.content
-
             if content:
                 yield content
+        except Exception:
+            continue
+
+if __name__ == "__main__":
+    prompt = input("Prompt: ")
+    print("\nAssistant:\n")
+    for token in stream_response(prompt):
+        print(token, end="", flush=True)
+    print()
